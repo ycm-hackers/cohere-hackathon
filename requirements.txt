@@ -1,2 +1,5 @@
 cohere
 python-dotenv
+alpaca-py
+pyautogen
+requests
