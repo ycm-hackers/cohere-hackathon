@@ -1,7 +1,5 @@
 # cohere-lablab Hackathon
 
-
-
 ### AutoQuant Install: 
 
 ```bash
@@ -11,6 +9,17 @@ pip install -r requirements.txt
 
 python autoquant.py
 ```
+
+### Data Handling
+
+Store financial data to VectorDB [weaviate](https://weaviate.io/):
+```bash
+python sec_to_vec.py
+
+# create schema
+python sec_to_vec.py --schema
+```
+
 
 ### Resources
 - [Cohere Hack Pack](https://drive.google.com/file/d/15h0_synH0w1UY_0mgauyk7PPwmtRgG5P/view)

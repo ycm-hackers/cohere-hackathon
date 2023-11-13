@@ -1,6 +1,8 @@
 """Push SEC filings to Weaviate."""
 import os
 import sys
+import glob
+import json
 import cohere
 import weaviate
 from dotenv import load_dotenv
@@ -10,11 +12,15 @@ from tools.utils import create_arg_parser
 # Get the secrets
 load_dotenv()
 weaviate_api_key = os.getenv("WEAVIATE_API_KEY")
+weaviate_url = os.getenv("WEAVIATE_URL")
 co_api_key = os.getenv("COHERE_API_KEY")
 
 weaviate_client = weaviate.Client(
-    url="https://cohere-ycm-hackathon-narbqtfd.weaviate.network",
+    url=weaviate_url,
     auth_client_secret=weaviate.AuthApiKey(api_key=weaviate_api_key),
+    additional_headers={
+        # "X-OpenAI-Api-Key": "YOUR-OPENAI-API-KEY",
+    },
 )
 co_client = cohere.Client(co_api_key)
 
@@ -22,113 +28,23 @@ co_client = cohere.Client(co_api_key)
 SCHEMA = {
     "classes": [
         {
-            "class": "f10k",
-            "description": "Storing 10K filings",
+            "class": "DocText",
+            "description": "Store document information as vectors with minimal metadata.",
             "properties": [
                 {
-                    "name": "business",
-                    "dataType": ["text"],
-                    "description": "Item 1. Business",
+                    "name": "vector",
+                    "dataType": ["number[]"],
+                    "description": "Vector embedding",
                 },
                 {
-                    "name": "risk",
+                    "name": "cik",
                     "dataType": ["text"],
-                    "description": "Item 1A. Risk Factors",
+                    "description": "Cik associated with the vector.",
                 },
                 {
-                    "name": "staff",
+                    "name": "source",
                     "dataType": ["text"],
-                    "description": "Item 1B. Unresolved Staff Comments",
-                },
-                {
-                    "name": "properties",
-                    "dataType": ["text"],
-                    "description": "Item 2. Properties",
-                },
-                {
-                    "name": "legal",
-                    "dataType": ["text"],
-                    "description": "Item 3. Legal Proceedings",
-                },
-                {
-                    "name": "mine",
-                    "dataType": ["text"],
-                    "description": "Item 4. Mine Safety Disclosures",
-                },
-                {
-                    "name": "market",
-                    "dataType": ["text"],
-                    "description": "Item 5. Market for Registrant’s Common Equity, Related Stockholder Matters and Issuer Purchases of Equity Securities",
-                },
-                {
-                    "name": "reserved",
-                    "dataType": ["text"],
-                    "description": "Item 6. Reserved",
-                },
-                {
-                    "name": "management",
-                    "dataType": ["text"],
-                    "description": "Item 7. Management’s Discussion and Analysis of Financial Condition and Results of Operations",
-                },
-                {
-                    "name": "disclosure",
-                    "dataType": ["text"],
-                    "description": "Item 7A. Quantitative and Qualitative Disclosures About Market Risk",
-                },
-                {
-                    "name": "financials",
-                    "dataType": ["text"],
-                    "description": "Item 8. Financial Statements and Supplementary Data",
-                },
-                {
-                    "name": "changes",
-                    "dataType": ["text"],
-                    "description": "Item 9. Changes in and Disagreements With Accountants on Accounting and Financial Disclosure",
-                },
-                {
-                    "name": "controls",
-                    "dataType": ["text"],
-                    "description": "Item 9A. Controls and Procedures",
-                },
-                {
-                    "name": "other",
-                    "dataType": ["text"],
-                    "description": "Item 9B. Other Information",
-                },
-                {
-                    "name": "foreign",
-                    "dataType": ["text"],
-                    "description": "Item 9C. Disclosure Regarding Foreign Jurisdictions that Prevent Inspection",
-                },
-                {
-                    "name": "officers",
-                    "dataType": ["text"],
-                    "description": "Item 10. Directors, Executive Officers and Corporate Governance",
-                },
-                {
-                    "name": "executive",
-                    "dataType": ["text"],
-                    "description": "Item 11. Executive Compensation",
-                },
-                {
-                    "name": "security",
-                    "dataType": ["text"],
-                    "description": "Item 12. Security Ownership of Certain Beneficial Owners and Management and Related Stockholder Matters",
-                },
-                {
-                    "name": "transactions",
-                    "dataType": ["text"],
-                    "description": "Item 13. Certain Relationships and Related Transactions, and Director Independence",
-                },
-                {
-                    "name": "fees",
-                    "dataType": ["text"],
-                    "description": "Item 14. Principal Accountant Fees and Services",
-                },
-                {
-                    "name": "exhibits",
-                    "dataType": ["text"],
-                    "description": "Item 15. Exhibits, Financial Statement Schedules",
+                    "description": "html link of the document.",
                 },
             ],
         }
@@ -136,18 +52,63 @@ SCHEMA = {
 }
 
 
-# weaviate_client.schema.create(SCHEMA)
+def read_json_document(dir_path: str = "data/10k", ff: str = "*.json"):
+    """Reads document and pushes data to weaviate db."""
+    for file in glob.glob(os.path.join(dir_path, ff)):
+        with open(file, "r") as f:
+            print(f"Reading file: {file}")
+            yield json.loads(f.read())
 
-# text = "Your text here"
-# response = co_client.embed(model='large', texts=[text])
-# embedding = response.embeddings[0]
 
-# data_object = {
-#     "text": text,
-#     "embedding": embedding
-# }
+def store_to_weaviate(
+    token_limit: int = 1024,
+    relevant_keys: list = [
+        "item_1",
+        "item_1A",
+        "item_1B",
+        "item_2",
+        "item_3",
+        "item_4",
+        "item_5",
+        "item_6",
+        "item_7",
+        "item_7A",
+        "item_8",
+        "item_9",
+        "item_9A",
+        "item_9B",
+        "item_10",
+        "item_11",
+        "item_12",
+        "item_13",
+        "item_14",
+        "item_15",
+    ],
+):
+    """Store data to weaviate."""
+    doc = read_json_document()
+    try:
+        while True:
+            next_doc = next(doc)
 
-# weaviate_client.data_object.create(data_object, "TextData")
+            txt = "".join(next_doc[k] for k in relevant_keys if k in next_doc)
+
+            for i in range(0, len(txt), token_limit):
+                response = co_client.embed(
+                    model="small", texts=[txt[i : i + token_limit]]
+                )
+                emb = response.embeddings[0]
+
+                data_object = {
+                    "class": "DocsText",
+                    "vector": emb,
+                    "cik": next_doc["cik"],
+                }
+
+                weaviate_client.data_object.create(data_object, "DocsText")
+            break
+    except StopIteration:
+        pass
 
 
 if __name__ == "__main__":
@@ -157,6 +118,9 @@ if __name__ == "__main__":
     if args.schema:
         import yaml
 
-        print("Creating schema.")
-        print(yaml.dump(SCHEMA, default_flow_style=False))
+        print("Creating schema.\n", yaml.dump(SCHEMA, default_flow_style=False))
         weaviate_client.schema.create(SCHEMA)
+
+    # print(weaviate_client.schema.get())
+    # read_json_document()
+    store_to_weaviate()
