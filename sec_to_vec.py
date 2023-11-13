@@ -19,7 +19,7 @@ weaviate_client = weaviate.Client(
     url=weaviate_url,
     auth_client_secret=weaviate.AuthApiKey(api_key=weaviate_api_key),
     additional_headers={
-        # "X-OpenAI-Api-Key": "YOUR-OPENAI-API-KEY",
+        "X-Cohere-Api-Key": co_api_key,
     },
 )
 co_client = cohere.Client(co_api_key)
@@ -30,6 +30,8 @@ SCHEMA = {
         {
             "class": "DocText",
             "description": "Store document information as vectors with minimal metadata.",
+            "vectorizer": "text2vec-cohere",
+            "vectorIndexConfig": {"distance": "cosine"},
             "properties": [
                 {
                     "name": "vector",
@@ -100,15 +102,36 @@ def store_to_weaviate(
                 emb = response.embeddings[0]
 
                 data_object = {
-                    "class": "DocsText",
+                    "class": "DocText",
                     "vector": emb,
                     "cik": next_doc["cik"],
+                    "source": next_doc["htm_filing_link"],
                 }
 
-                weaviate_client.data_object.create(data_object, "DocsText")
+                weaviate_client.data_object.create(data_object, "DocText")
             break
     except StopIteration:
         pass
+
+
+def find_nn_token(query: str) -> dict:
+    """Return the response vector to query."""
+    resp = co_client.embed(
+        model="small", texts=["What is lattice semiconductors doing?"]
+    )
+    query_vector = resp.embeddings[0]
+
+    result = (
+        weaviate_client.query.get("DocText", ["cik", "vector", "source"])
+        .with_near_vector({"vector": query_vector})
+        .with_limit(1)
+        .do()
+    )
+    try:
+        res = result["data"]["Get"]["DocText"]
+        return res[0]
+    except KeyError:
+        print("No results found.")
 
 
 if __name__ == "__main__":
@@ -120,7 +143,14 @@ if __name__ == "__main__":
 
         print("Creating schema.\n", yaml.dump(SCHEMA, default_flow_style=False))
         weaviate_client.schema.create(SCHEMA)
+        exit()
 
-    # print(weaviate_client.schema.get())
-    # read_json_document()
-    store_to_weaviate()
+    if args.delete:
+        weaviate_client.schema.delete_all()
+        exit()
+
+    if args.store:
+        store_to_weaviate()
+
+    res = find_nn_token("What has Apple been doing in 2022?")
+    print(res)
