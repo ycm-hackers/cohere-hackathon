@@ -1,10 +1,11 @@
+"""Push SEC filings to Weaviate."""
 import os
 import sys
 import cohere
 import weaviate
 from dotenv import load_dotenv
 
-from utils import create_arg_parser
+from tools.utils import create_arg_parser
 
 # Get the secrets
 load_dotenv()

@@ -3,3 +3,4 @@ python-dotenv
 alpaca-py
 pyautogen
 requests
+weaviate
