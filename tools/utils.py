@@ -16,6 +16,15 @@ def create_arg_parser():
         action=argparse.BooleanOptionalAction,
         help="Storing new embeddings.",
     )
+
+    parser.add_argument(
+        "--continue_from",
+        type=int,
+        nargs="?",
+        help="Specify if some files have been processed.",
+        const=1,
+        default=0,
+    )
     parser.add_argument(
         "--delete",
         type=bool,

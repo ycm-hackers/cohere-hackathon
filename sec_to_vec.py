@@ -1,8 +1,10 @@
 """Push SEC filings to Weaviate."""
-import os
-import sys
 import glob
 import json
+import os
+import sys
+import time
+
 import cohere
 import weaviate
 from dotenv import load_dotenv
@@ -54,15 +56,20 @@ SCHEMA = {
 }
 
 
-def read_json_document(dir_path: str = "data/10k", ff: str = "*.json"):
+def read_json_document(
+    dir_path: str = "data/10k", ff: str = "*.json", continue_from: int = 0
+):
     """Reads document and pushes data to weaviate db."""
-    for file in glob.glob(os.path.join(dir_path, ff)):
+    for idx, file in enumerate(glob.glob(os.path.join(dir_path, ff))):
+        if idx < continue_from:
+            continue
         with open(file, "r") as f:
             print(f"Reading file: {file}")
             yield json.loads(f.read())
 
 
 def store_to_weaviate(
+    continue_from: int = 0,
     token_limit: int = 1024,
     relevant_keys: list = [
         "item_1",
@@ -88,7 +95,7 @@ def store_to_weaviate(
     ],
 ):
     """Store data to weaviate."""
-    doc = read_json_document()
+    doc = read_json_document(continue_from=continue_from)
     try:
         while True:
             next_doc = next(doc)
@@ -96,10 +103,14 @@ def store_to_weaviate(
             txt = "".join(next_doc[k] for k in relevant_keys if k in next_doc)
 
             for i in range(0, len(txt), token_limit):
-                response = co_client.embed(
-                    model="small", texts=[txt[i : i + token_limit]]
-                )
-                emb = response.embeddings[0]
+                try:
+                    response = co_client.embed(
+                        model="small", texts=[txt[i : i + token_limit]]
+                    )
+                    emb = response.embeddings[0]
+                except Exception as e:
+                    print(e, "\nWaiting for 60s.")
+                    time.sleep(60_000)
 
                 data_object = {
                     "class": "DocText",
@@ -109,29 +120,33 @@ def store_to_weaviate(
                 }
 
                 weaviate_client.data_object.create(data_object, "DocText")
-            break
     except StopIteration:
         pass
 
 
-def find_nn_token(query: str) -> dict:
-    """Return the response vector to query."""
-    resp = co_client.embed(
-        model="small", texts=["What is lattice semiconductors doing?"]
-    )
+def find_nn_token(query: str, res_limit: int = 1) -> dict:
+    """Return the response vector to query.
+
+    :param query: Input query string.
+    :param res_limit: Number of maximum results to return.
+    :return: Response Dict.
+    """
+    resp = co_client.embed(model="small", texts=[query])
     query_vector = resp.embeddings[0]
 
     result = (
         weaviate_client.query.get("DocText", ["cik", "vector", "source"])
+        .with_additional(["id"])
         .with_near_vector({"vector": query_vector})
-        .with_limit(1)
+        .with_limit(res_limit)
         .do()
     )
     try:
         res = result["data"]["Get"]["DocText"]
-        return res[0]
+        return res
     except KeyError:
         print("No results found.")
+        return {}
 
 
 if __name__ == "__main__":
@@ -144,13 +159,12 @@ if __name__ == "__main__":
         print("Creating schema.\n", yaml.dump(SCHEMA, default_flow_style=False))
         weaviate_client.schema.create(SCHEMA)
         exit()
-
     if args.delete:
         weaviate_client.schema.delete_all()
         exit()
-
     if args.store:
-        store_to_weaviate()
+        store_to_weaviate(continue_from=args.continue_from)
 
-    res = find_nn_token("What has Apple been doing in 2022?")
+    # Run test
+    res = find_nn_token("jo")
     print(res)
