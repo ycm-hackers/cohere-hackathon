@@ -9,6 +9,9 @@ __pycache__/
 # Distribution / packaging
 .Python
 
+# IDE
+.vscode
+
 # Unit test / coverage reports
 htmlcov/
 .tox/
