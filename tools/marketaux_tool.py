@@ -2,6 +2,13 @@ import os
 from dotenv import load_dotenv
 import requests
 import json
+from typing import Optional, Type
+from langchain.tools.base import BaseTool, BaseModel
+from langchain.pydantic_v1 import Field
+from langchain.callbacks.manager import (
+    AsyncCallbackManagerForToolRun,
+    CallbackManagerForToolRun,
+)
 
 # Load environment variables
 load_dotenv()
@@ -9,9 +16,40 @@ load_dotenv()
 # Get API token from environment variables
 API_TOKEN = os.getenv('MARKETAUX_API_TOKEN')
 
-# Constants
+class MarketauxToolSchema(BaseModel):
+    tikers: str = Field(description="A string of financial securities ticker symbols seperated by commas")
 
-class MarketauxTool:
+class MarketauxTool(BaseTool):
+    name = "Marketaux"
+    description = """
+        Use to retrieve the latest market news on securities. Returns a JSON of article summaries with highlights 
+        and article URLs for requesting more information.
+        """
+    args_schema: Type[MarketauxToolSchema] = MarketauxToolSchema
+
+    def _run(
+        self,
+        tickers: str,
+        run_manager: Optional[CallbackManagerForToolRun] = None,
+    ) -> str:
+        """Use the tool."""
+        search_wrapper = MarketauxToolAPI()
+        
+        return search_wrapper.get_market_news(tickers)
+
+    async def _arun(
+        self,
+        query: str,
+        engine: str = "google",
+        gl: str = "us",
+        hl: str = "en",
+        run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
+    ) -> str:
+        """Use the tool asynchronously."""
+        raise NotImplementedError("MarketauxTool does not support async")
+
+# Constants
+class MarketauxToolAPI:
     def __init__(self):
         token = os.getenv('MARKETAUX_API_TOKEN')
 
