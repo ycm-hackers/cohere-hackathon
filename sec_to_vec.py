@@ -41,6 +41,11 @@ SCHEMA = {
                     "description": "Vector embedding",
                 },
                 {
+                    "name": "orgText",
+                    "dataType": ["text"],
+                    "description": "Original text of the document.",
+                },
+                {
                     "name": "cik",
                     "dataType": ["text"],
                     "description": "Cik associated with the vector.",
@@ -101,7 +106,6 @@ def store_to_weaviate(
             next_doc = next(doc)
 
             txt = "".join(next_doc[k] for k in relevant_keys if k in next_doc)
-
             for i in range(0, len(txt), token_limit):
                 try:
                     response = co_client.embed(
@@ -115,6 +119,7 @@ def store_to_weaviate(
                 data_object = {
                     "class": "DocText",
                     "vector": emb,
+                    "orgText": txt[i : i + token_limit],
                     "cik": next_doc["cik"],
                     "source": next_doc["htm_filing_link"],
                 }
@@ -124,21 +129,22 @@ def store_to_weaviate(
         pass
 
 
-def find_nn_token(query: str, res_limit: int = 1) -> dict:
+def find_nn_token(query: str, k: int = 1) -> dict:
     """Return the response vector to query.
 
     :param query: Input query string.
-    :param res_limit: Number of maximum results to return.
+    :param k: Number of k like in k-nearest neighbors.
+        Define the number of results that get returned by the db query.
     :return: Response Dict.
     """
     resp = co_client.embed(model="small", texts=[query])
     query_vector = resp.embeddings[0]
 
     result = (
-        weaviate_client.query.get("DocText", ["cik", "vector", "source"])
+        weaviate_client.query.get("DocText", ["vector", "orgText", "cik", "source"])
         .with_additional(["id"])
         .with_near_vector({"vector": query_vector})
-        .with_limit(res_limit)
+        .with_limit(k)
         .do()
     )
     try:
@@ -146,7 +152,19 @@ def find_nn_token(query: str, res_limit: int = 1) -> dict:
         return res
     except KeyError:
         print("No results found.")
-        return {}
+        return []
+
+
+def augment_prompt(query: str, k: int = 3):
+    """Augment the prompt with the best retrievals."""
+    res = find_nn_token(query, k=3)
+    source_knowledge = "\n".join([x["orgText"] for x in res])
+
+    augmented_prompt = f"""Using the contexts below, answer the query.
+    Contexts:
+    {source_knowledge}
+    Query: {query}"""
+    return augmented_prompt
 
 
 if __name__ == "__main__":
@@ -166,5 +184,6 @@ if __name__ == "__main__":
         store_to_weaviate(continue_from=args.continue_from)
 
     # Run test
-    res = find_nn_token("jo")
-    print(res)
+    res = find_nn_token("lattice 2021", k=3)
+
+    [print(f"{x['orgText']}\n") for x in res]
