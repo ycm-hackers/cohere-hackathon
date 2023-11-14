@@ -1,9 +1,23 @@
+import os
+from dotenv import load_dotenv
 from alpaca.trading.client import TradingClient
 from alpaca.trading.requests import GetAssetsRequest, MarketOrderRequest, GetOrdersRequest
 from alpaca.trading.enums import AssetClass, OrderSide, TimeInForce, QueryOrderStatus
 
-class AlpacaTool:
-    def __init__(self, api_key, secret_key):
+# Load environment variables
+load_dotenv()
+
+class AlpacaToolApi:
+    def __init__(self):
+        api_key = os.getenv('ALPACA_API_KEY')
+        secret_key = os.getenv('ALPACA_API_SECRET')
+
+        if api_key is None:
+            raise Exception('ALPACA_API_KEY is not a defined environment variable')
+        
+        if secret_key is None:
+            raise Exception('ALPACA_API_SECRET is not a defined environment variable')
+
         self.trading_client = TradingClient(api_key, secret_key)
 
     def buying_power(self):

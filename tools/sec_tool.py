@@ -9,7 +9,7 @@ import requests
 import json
 from typing import Optional, Type
 from langchain.tools.base import BaseTool, BaseModel
-from langchain.pydantic_v1 import Field
+from pydantic.fields import Field
 from langchain.callbacks.manager import (
     AsyncCallbackManagerForToolRun,
     CallbackManagerForToolRun,
@@ -50,7 +50,6 @@ class SecTool(BaseTool):
 class SecToolAPI:
     def __init__(self):
         WEAVIATE_URL = os.getenv("WEAVIATE_URL")
-        WEAVIATE_API_KEY = weaviate.AuthApiKey(api_key=os.getenv("WEAVIATE_API_KEY"))
         COHERE_API_KEY = os.getenv("COHERE_API_KEY")
         OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
@@ -58,6 +57,8 @@ class SecToolAPI:
             raise Exception('WEAVIATE_URL is not a defined environment variable')
         if WEAVIATE_API_KEY is None:
             raise Exception('WEAVIATE_API_KEY is not a defined environment variable')
+        
+        WEAVIATE_API_KEY = weaviate.AuthApiKey(api_key=os.getenv("WEAVIATE_API_KEY"))
         if COHERE_API_KEY is None:
             raise Exception('COHERE_API_KEY is not a defined environment variable')
         if OPENAI_API_KEY is None:
@@ -94,3 +95,5 @@ class SecToolAPI:
             print(doc.metadata)
             print("\n\n" + doc.page_content)
             print("\n\n" + "-" * 30 + "\n\n")
+
+        return 

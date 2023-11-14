@@ -4,7 +4,7 @@ import requests
 import json
 from typing import Optional, Type
 from langchain.tools.base import BaseTool, BaseModel
-from langchain.pydantic_v1 import Field
+from pydantic.fields import Field
 from langchain.callbacks.manager import (
     AsyncCallbackManagerForToolRun,
     CallbackManagerForToolRun,
@@ -22,8 +22,8 @@ class MarketauxToolSchema(BaseModel):
 class MarketauxTool(BaseTool):
     name = "Marketaux"
     description = """
-        Use to retrieve the latest market news on securities. Returns a JSON of article summaries with highlights 
-        and article URLs for requesting more information.
+        Use to retrieve the latest market news on securities.
+        Returns a JSON of article summaries with highlights and article URLs for requesting more information.
         """
     args_schema: Type[MarketauxToolSchema] = MarketauxToolSchema
 
@@ -39,10 +39,7 @@ class MarketauxTool(BaseTool):
 
     async def _arun(
         self,
-        query: str,
-        engine: str = "google",
-        gl: str = "us",
-        hl: str = "en",
+        tickers: str,
         run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
     ) -> str:
         """Use the tool asynchronously."""
