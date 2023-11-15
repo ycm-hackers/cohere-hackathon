@@ -22,8 +22,8 @@ class MarketauxToolSchema(BaseModel):
 class MarketauxTool(BaseTool):
     name = "Marketaux"
     description = """
-        Use to retrieve the latest market news on securities. Returns a JSON of article summaries with highlights 
-        and article URLs for requesting more information.
+        Use to retrieve the latest market news on securities.
+        Returns a JSON of article summaries with highlights and article URLs for requesting more information.
         """
     args_schema: Type[MarketauxToolSchema] = MarketauxToolSchema
 
@@ -39,10 +39,7 @@ class MarketauxTool(BaseTool):
 
     async def _arun(
         self,
-        query: str,
-        engine: str = "google",
-        gl: str = "us",
-        hl: str = "en",
+        tickers: str,
         run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
     ) -> str:
         """Use the tool asynchronously."""
@@ -68,7 +65,8 @@ class MarketauxToolAPI:
         data = self._fetch_data("https://api.marketaux.com/v1/news/all", params)
         
         if data and "data" in data:
-            return self._data_parser(data["data"], tickers)
+            res = self._data_parser(data["data"], tickers)
+            return res
         else:
             print("Unexpected API response data.")
             return None
