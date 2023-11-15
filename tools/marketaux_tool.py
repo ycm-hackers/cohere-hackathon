@@ -34,7 +34,7 @@ class MarketauxTool(BaseTool):
     ) -> str:
         """Use the tool."""
         search_wrapper = MarketauxToolAPI()
-        
+        print(tickers)
         return search_wrapper.get_market_news(tickers)
 
     async def _arun(

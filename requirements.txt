@@ -5,3 +5,4 @@ pyautogen
 requests
 weaviate-client
 streamlit
+langchain

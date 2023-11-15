@@ -8,11 +8,13 @@ from langchain.callbacks.manager import (
 from tools.alpaca_tools.alpaca_api import AlpacaToolApi
 
 class AlpacaSellOrderSchema(BaseModel):
-    ticker: str = Field(description="ticker symbol of the security to order. must be in all caps")
-    quantity: int = Field(description="Quantity amount of the security to sell")
+    query: str = Field("""
+        Should be a 2 value string seperated by a comma with the following values:
+        1st value is `ticker` (A ticker symbol of the security to order. must be in all caps) 
+        and the 2nd value is `quantity` (an integer amount of the security to sell)
+        """)
 
-
-class AlpacaCreateSellOrderTool(BaseTool):
+class AlpacaSellOrderTool(BaseTool):
     name = "Alpaca Create Sell Order"
     description = """
         Run this function to execute a buy order at current market price
@@ -21,12 +23,12 @@ class AlpacaCreateSellOrderTool(BaseTool):
 
     def _run(
         self,
-        ticker: str,
-        quantity: int,
+        query: str,
         run_manager: Optional[CallbackManagerForToolRun] = None,
     ) -> str:
         """Use the tool."""
         search_wrapper = AlpacaToolApi()
+        ticker, quantity = query.split(',')
 
         return search_wrapper.create_sell_market_order(params={"ticker": ticker, "quantity": quantity})
 

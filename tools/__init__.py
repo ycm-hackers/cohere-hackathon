@@ -6,7 +6,7 @@ from tools.alpaca_tools import (
     AlpacaCurrentPositionsTool,
     AlpacaGainLossStatusTool,
     AlpacaOpenOrdersTool,
-    AlpacaCreateSellOrderTool
+    AlpacaSellOrderTool
 )
 __all__ = [
     "MarketauxTool",
@@ -16,5 +16,5 @@ __all__ = [
     "AlpacaCurrentPositionsTool",
     "AlpacaGainLossStatusTool",
     "AlpacaOpenOrdersTool",
-    "AlpacaCreateSellOrderTool"
+    "AlpacaSellOrderTool"
 ]
