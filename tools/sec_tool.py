@@ -79,11 +79,11 @@ class SecToolAPI:
 
         docs = retriever.get_relevant_documents(
             query,
-            # score=True,
         )
         res = "\n".join([doc.page_content for doc in docs])
+        source = docs[0].metadata["source"]
 
-        return f"""Contexts:{res}\nQuery:{query}"""
+        return f"""Contexts:{res}\nQuery:{query}.""", source
 
     def _pretty_print(self, docs):
         for doc in docs:

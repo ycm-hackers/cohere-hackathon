@@ -51,6 +51,16 @@ SCHEMA = {
                     "dataType": ["text"],
                     "description": "Cik associated with the vector.",
                 },
+                # {
+                #     "name": "category",
+                #     "dataType": ["text"],
+                #     "description": "Associated category of the text chunk.",
+                # },
+                # {
+                #     "name": "year",
+                #     "dataType": ["text"],
+                #     "description": "",
+                # },
                 {
                     "name": "source",
                     "dataType": ["text"],
@@ -101,35 +111,44 @@ def store_to_weaviate(
     ],
 ):
     """Store data to weaviate."""
+    def within_paragraphs(doc: dict):
+        for k in relevant_keys:
+            if k in doc:
+                yield txt
+
     doc = read_json_document(continue_from=continue_from)
     try:
         while True:
             next_doc = next(doc)
 
-            txt = "".join(next_doc[k] for k in relevant_keys if k in next_doc)
-            for i in tqdm(range(0, len(txt), chunk_size)):
-                try:
-                    response = co_client.embed(
-                        model="small", texts=[txt[i : i + chunk_size]]
-                    )
-                    emb = response.embeddings[0]
-                except Exception as e:
-                    print(e, "\nWaiting for 60s.")
-                    time.sleep(60_000)
+            # txt = "".join(next_doc[k] for k in relevant_keys if k in next_doc)
+            for k in relevant_keys:
+                if k in next_doc:
+                    txt = next_doc[k]
 
-                data_object = {
-                    "class": "DocText",
-                    "vector": emb,
-                    "orgText": txt[i : i + chunk_size],
-                    "cik": next_doc["cik"],
-                    "source": next_doc["htm_filing_link"],
-                }
-                weaviate_client.data_object.create(data_object, "DocText")
+                    for i in tqdm(range(0, len(txt), chunk_size)):
+                        try:
+                            response = co_client.embed(
+                                model="small", texts=[txt[i : i + chunk_size]]
+                            )
+                            emb = response.embeddings[0]
+                        except Exception as e:
+                            print(e, "\nWaiting for 60s.")
+                            time.sleep(60_000)
+
+                        data_object = {
+                            "class": "DocText",
+                            "vector": emb,
+                            "orgText": txt[i : i + chunk_size],
+                            "cik": next_doc["cik"],
+                            "source": next_doc["htm_filing_link"],
+                        }
+                        weaviate_client.data_object.create(data_object, "DocText")
     except StopIteration:
         pass
 
 
-def count_chunks(
+def investigate_chunk(
     chunk_size: int = 8184,
     continue_from: int = 0,
     relevant_keys: list = [
@@ -170,44 +189,6 @@ def count_chunks(
     return res
 
 
-def find_nn_token(query: str, k: int = 1) -> list:
-    """Return the response vector to query.
-
-    :param query: Input query string.
-    :param k: Number of k like in k-nearest neighbors.
-        Define the number of results that get returned by the db query.
-    :return: Response Dict.
-    """
-    resp = co_client.embed(model="small", texts=[query])
-    query_vector = resp.embeddings[0]
-
-    result = (
-        weaviate_client.query.get("DocText", ["vector", "orgText", "cik", "source"])
-        .with_additional(["id"])
-        .with_near_vector({"vector": query_vector})
-        .with_limit(k)
-        .do()
-    )
-    try:
-        res = result["data"]["Get"]["DocText"]
-        return res
-    except KeyError:
-        print("No results found.")
-        return []
-
-
-def augment_prompt(query: str, k: int = 3):
-    """Augment the prompt with the best retrievals."""
-    res = find_nn_token(query, k=3)
-    source_knowledge = "\n".join([x["orgText"] for x in res])
-
-    augmented_prompt = f"""Using the contexts below, answer the query.
-    Contexts:
-    {source_knowledge}
-    Query: {query}"""
-    return augmented_prompt
-
-
 if __name__ == "__main__":
     arg_parser = create_arg_parser()
     args = arg_parser.parse_args(sys.argv[1:])
@@ -224,5 +205,4 @@ if __name__ == "__main__":
     if args.store:
         store_to_weaviate(continue_from=args.continue_from)
     if args.test:
-        res = find_nn_token("What did lattice do in 2021?", k=3)
-        [print(f"{x['orgText']}\n") for x in res]
+        investigate_chunk(continue_from=args.continue_from)

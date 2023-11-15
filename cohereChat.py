@@ -22,7 +22,7 @@ co = cohere.Client(co_api_key)
 
 sec = SecToolAPI()
 
-RAG = False
+RAG = True
 # Initialize the chat history
 chat_history = []
 
@@ -43,7 +43,8 @@ while True:
         if message:
             if RAG:
                 # message = augment_prompt(message, co, weaviate_client, k=3, use_rerank=True)
-                message = sec.retrieve(message)
+                message, src = sec.retrieve(message)
+                srcs = "\n\nsource:\n" + src
 
             # Generate a response with the current chat history
             response = co.chat(
@@ -53,6 +54,8 @@ while True:
                 chat_history=chat_history
             )
             answer = response.text
+            if RAG:
+                answer += srcs
 
             # Print the bot's response to the terminal
             print("Chatbot: " + answer)
