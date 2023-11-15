@@ -11,7 +11,7 @@ class AlpacaBuyOrderSchema(BaseModel):
     query: str = Field("""
         Should be a 2 value string seperated by a comma with the following values:
         1st value is `ticker` (A ticker symbol of the security to order. must be in all caps) 
-        and the 2nd value is `quantity` (and integer amount of the security to purchase)
+        and the 2nd value is `quantity` (an integer amount of the security to purchase)
         """)
 
 class AlpacaBuyOrderTool(BaseTool):

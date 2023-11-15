@@ -1,7 +1,8 @@
+alpaca-py
 cohere
 python-dotenv
-alpaca-py
 pyautogen
 requests
 weaviate-client
 streamlit
+langchain

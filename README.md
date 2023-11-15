@@ -20,6 +20,12 @@ python sec_to_vec.py
 python sec_to_vec.py --schema
 ```
 
+### Using agent
+run the following command
+```bash
+python langchain-autoquant-example.py
+```
+
 
 ### Resources
 - [Cohere Hack Pack](https://drive.google.com/file/d/15h0_synH0w1UY_0mgauyk7PPwmtRgG5P/view)
