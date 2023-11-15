@@ -86,7 +86,7 @@ def read_json_document(
 
 def store_to_weaviate(
     continue_from: int = 0,
-    chunk_size: int = 8184,
+    chunk_size: int = 2048,
     relevant_keys: list = [
         "item_1",
         "item_1A",

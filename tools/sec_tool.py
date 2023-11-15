@@ -1,6 +1,7 @@
 import os
 from typing import Optional, Type
 import weaviate
+import cohere
 from dotenv import load_dotenv
 from langchain.callbacks.manager import (
     AsyncCallbackManagerForToolRun,
@@ -8,6 +9,8 @@ from langchain.callbacks.manager import (
 )
 from langchain.pydantic_v1 import Field
 from langchain.retrievers.weaviate_hybrid_search import WeaviateHybridSearchRetriever
+from langchain.retrievers.document_compressors import CohereRerank
+from langchain.retrievers import ContextualCompressionRetriever
 from langchain.tools.base import BaseModel, BaseTool
 
 # Load environment variables
@@ -53,7 +56,7 @@ class SecToolAPI:
             raise Exception("WEAVIATE_URL is not a defined environment variable")
         WEAVIATE_API_KEY = weaviate.AuthApiKey(api_key=os.getenv("WEAVIATE_API_KEY"))
         if WEAVIATE_API_KEY is None:
-            raise Exception('WEAVIATE_API_KEY is not a defined environment variable')
+            raise Exception("WEAVIATE_API_KEY is not a defined environment variable")
         if COHERE_API_KEY is None:
             raise Exception("COHERE_API_KEY is not a defined environment variable")
 
@@ -64,8 +67,12 @@ class SecToolAPI:
                 "X-Cohere-Api-Key": COHERE_API_KEY,
             },
         )
+        self.co_client = cohere.Client(api_key=COHERE_API_KEY)
+        self.rerank = CohereRerank(
+            client=self.co_client, user_agent="langchain", cohere_api_key=COHERE_API_KEY
+        )
 
-    def retrieve(self, query: str, k: int = 1):
+    def retrieve(self, query: str, k: int = 3):
         """Fetch market news and return a summary."""
         retriever = WeaviateHybridSearchRetriever(
             client=self.client,
@@ -75,8 +82,10 @@ class SecToolAPI:
             attributes=["vector", "cik", "source"],
             create_schema_if_missing=False,
         )
-
-        docs = retriever.get_relevant_documents(
+        ccr = ContextualCompressionRetriever(
+            base_retriever=retriever, base_compressor=self.rerank
+        )
+        docs = ccr.get_relevant_documents(
             query,
         )
         res = "\n".join([doc.page_content for doc in docs])
