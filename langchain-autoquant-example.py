@@ -80,7 +80,7 @@ def create_agent_chain():
 
 def prompt_chain(query, agent):
     print(agent.run(input=query))
-    prompt = input("Whould you like to ask another question?")
+    prompt = input("Whould you like to ask another question? ")
     prompt_chain(prompt)
 
 
@@ -88,7 +88,7 @@ def prompt_chain(query, agent):
 
 
 def main():
-    prompt = input("What do you want to know?")
+    prompt = input("What do you want to know? ")
     agent = create_agent_chain()
     prompt_chain(prompt, agent)
 
