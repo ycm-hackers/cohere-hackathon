@@ -3,6 +3,7 @@ import cohere
 import weaviate
 from dotenv import load_dotenv
 
+from tools.sec_tool import SecToolAPI
 from rag_co import augment_prompt
 
 load_dotenv()
@@ -18,6 +19,8 @@ weaviate_client = weaviate.Client(
     },
 )
 co = cohere.Client(co_api_key)
+
+sec = SecToolAPI()
 
 RAG = False
 # Initialize the chat history
@@ -39,7 +42,8 @@ while True:
         # Only send the message if it's not empty
         if message:
             if RAG:
-                message = augment_prompt(message, co, weaviate_client, k=3, use_rerank=True)
+                # message = augment_prompt(message, co, weaviate_client, k=3, use_rerank=True)
+                message = sec.retrieve(message)
 
             # Generate a response with the current chat history
             response = co.chat(
