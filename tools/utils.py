@@ -16,6 +16,12 @@ def create_arg_parser():
         action=argparse.BooleanOptionalAction,
         help="Storing new embeddings.",
     )
+    parser.add_argument(
+        "--test",
+        type=bool,
+        action=argparse.BooleanOptionalAction,
+        help="Test retrievals.",
+    )
 
     parser.add_argument(
         "--continue_from",

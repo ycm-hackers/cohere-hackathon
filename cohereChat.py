@@ -1,11 +1,28 @@
-import cohere
 import os
+import cohere
+import weaviate
 from dotenv import load_dotenv
 
-load_dotenv() 
-api_key = os.getenv('COHERE_API_KEY')
-co = cohere.Client(api_key)
+from tools.sec_tool import SecToolAPI
+from rag_co import augment_prompt
 
+load_dotenv()
+co_api_key = os.getenv('COHERE_API_KEY')
+weaviate_api_key = os.getenv("WEAVIATE_API_KEY")
+weaviate_url = os.getenv("WEAVIATE_URL")
+
+weaviate_client = weaviate.Client(
+    url=weaviate_url,
+    auth_client_secret=weaviate.AuthApiKey(api_key=weaviate_api_key),
+    additional_headers={
+        "X-Cohere-Api-Key": co_api_key,
+    },
+)
+co = cohere.Client(co_api_key)
+
+sec = SecToolAPI()
+
+RAG = False
 # Initialize the chat history
 chat_history = []
 
@@ -24,6 +41,10 @@ while True:
 
         # Only send the message if it's not empty
         if message:
+            if RAG:
+                # message = augment_prompt(message, co, weaviate_client, k=3, use_rerank=True)
+                message = sec.retrieve(message)
+
             # Generate a response with the current chat history
             response = co.chat(
                 message,

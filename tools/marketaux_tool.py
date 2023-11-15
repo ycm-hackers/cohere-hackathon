@@ -4,7 +4,7 @@ import requests
 import json
 from typing import Optional, Type
 from langchain.tools.base import BaseTool, BaseModel
-from pydantic.fields import Field
+from langchain.pydantic_v1 import Field
 from langchain.callbacks.manager import (
     AsyncCallbackManagerForToolRun,
     CallbackManagerForToolRun,
@@ -65,7 +65,8 @@ class MarketauxToolAPI:
         data = self._fetch_data("https://api.marketaux.com/v1/news/all", params)
         
         if data and "data" in data:
-            return self._data_parser(data["data"], tickers)
+            res = self._data_parser(data["data"], tickers)
+            return res
         else:
             print("Unexpected API response data.")
             return None

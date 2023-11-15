@@ -4,6 +4,7 @@ import json
 import os
 import sys
 import time
+from tqdm import tqdm
 
 import cohere
 import weaviate
@@ -75,7 +76,7 @@ def read_json_document(
 
 def store_to_weaviate(
     continue_from: int = 0,
-    token_limit: int = 1024,
+    chunk_size: int = 8184,
     relevant_keys: list = [
         "item_1",
         "item_1A",
@@ -106,10 +107,10 @@ def store_to_weaviate(
             next_doc = next(doc)
 
             txt = "".join(next_doc[k] for k in relevant_keys if k in next_doc)
-            for i in range(0, len(txt), token_limit):
+            for i in tqdm(range(0, len(txt), chunk_size)):
                 try:
                     response = co_client.embed(
-                        model="small", texts=[txt[i : i + token_limit]]
+                        model="small", texts=[txt[i : i + chunk_size]]
                     )
                     emb = response.embeddings[0]
                 except Exception as e:
@@ -119,17 +120,57 @@ def store_to_weaviate(
                 data_object = {
                     "class": "DocText",
                     "vector": emb,
-                    "orgText": txt[i : i + token_limit],
+                    "orgText": txt[i : i + chunk_size],
                     "cik": next_doc["cik"],
                     "source": next_doc["htm_filing_link"],
                 }
-
                 weaviate_client.data_object.create(data_object, "DocText")
     except StopIteration:
         pass
 
 
-def find_nn_token(query: str, k: int = 1) -> dict:
+def count_chunks(
+    chunk_size: int = 8184,
+    continue_from: int = 0,
+    relevant_keys: list = [
+        "item_1",
+        "item_1A",
+        "item_1B",
+        "item_2",
+        "item_3",
+        "item_4",
+        "item_5",
+        "item_6",
+        "item_7",
+        "item_7A",
+        "item_8",
+        "item_9",
+        "item_9A",
+        "item_9B",
+        "item_10",
+        "item_11",
+        "item_12",
+        "item_13",
+        "item_14",
+        "item_15",
+    ],
+):
+    """Count the number of text chunks."""
+    res = 0
+    doc = read_json_document(continue_from=continue_from)
+    try:
+        while True:
+            next_doc = next(doc)
+
+            txt = "".join(next_doc[k] for k in relevant_keys if k in next_doc)
+            for i in range(0, len(txt), chunk_size):
+                res += 1
+    except StopIteration:
+        pass
+    return res
+
+
+def find_nn_token(query: str, k: int = 1) -> list:
     """Return the response vector to query.
 
     :param query: Input query string.
@@ -182,8 +223,6 @@ if __name__ == "__main__":
         exit()
     if args.store:
         store_to_weaviate(continue_from=args.continue_from)
-
-    # Run test
-    res = find_nn_token("lattice 2021", k=3)
-
-    [print(f"{x['orgText']}\n") for x in res]
+    if args.test:
+        res = find_nn_token("What did lattice do in 2021?", k=3)
+        [print(f"{x['orgText']}\n") for x in res]
