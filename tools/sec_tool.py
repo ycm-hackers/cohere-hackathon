@@ -22,9 +22,9 @@ class SecToolSchema(BaseModel):
 
 
 class SecTool(BaseTool):
-    name = "Marketaux"
+    name = "SecTool"
     description = """
-        Use to retrieve relevant SEC financial statements
+        Use to retrieve relevant SEC financial statements, 10-Ks, 10-Qs, and 8-Ks for stock tickers.
         """
     args_schema: Type[SecToolSchema] = SecToolSchema
 
