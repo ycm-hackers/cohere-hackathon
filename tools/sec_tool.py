@@ -22,9 +22,9 @@ class SecToolSchema(BaseModel):
 
 
 class SecTool(BaseTool):
-    name = "Marketaux"
+    name = "SEC Tool"
     description = """
-        Use to retrieve relevant SEC financial statements
+        Use to retrieve in depth factual financial statements released by the SEC
         """
     args_schema: Type[SecToolSchema] = SecToolSchema
 

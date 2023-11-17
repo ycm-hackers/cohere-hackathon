@@ -48,7 +48,7 @@ from tools import (
 
 
 tools = [
-    MarketauxTool(),
+    # MarketauxTool(),
     SecTool(),
     AlpacaBuyOrderTool(),
     AlpacaBuyingPowerTool(),
@@ -71,7 +71,6 @@ def create_agent_chain():
                             verbose=True,
                             memory=memory,
                             handle_parsing_errors=True)
-
 
 # In[ ]:
 

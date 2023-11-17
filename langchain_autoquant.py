@@ -50,7 +50,7 @@ from tools import (
 
 
 tools = [
-    # MarketauxTool(),
+    MarketauxTool(),
     SecTool(),
     AlpacaBuyOrderTool(),
     AlpacaBuyingPowerTool(),

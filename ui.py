@@ -6,7 +6,11 @@ from langchain_autoquant import create_agent_chain
 st.title("Ask the SEC")
 
 agent = create_agent_chain()
-tickers = ""
+# tickers = ""
+
+# Create a placeholder
+placeholder = st.empty()
+
 
 # Persistent state to store chat history
 if 'chat_history' not in st.session_state:
@@ -14,17 +18,19 @@ if 'chat_history' not in st.session_state:
 
 # Prompt LLM Agent
 def my_chat_function(input):
+    # Display a loading message
+    placeholder.text('Loading data... Please wait.')
     return agent.run(input=input)
 
 # Set ticker symbol
-def set_stock(symbol):
-    tickers = symbol
+# def set_stock(symbol):
+#     tickers = symbol
 
 # Ticker input
-st.header("Please enter the stock symbol")
-symbol = st.text_input(label="symbol",key="symbol")
-if symbol:
-    set_stock(symbol)
+# st.header("Please enter the stock symbol")
+# symbol = st.text_input(label="symbol",key="symbol")
+# if symbol:
+#     set_stock(symbol)
 
 # Text input for user message
 user_input = st.chat_input("Your Message", key="user_input")
