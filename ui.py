@@ -1,19 +1,24 @@
 import streamlit as st
+from langchain_autoquant import create_agent_chain
+
 
 # Title of the app
 st.title("Ask the SEC")
+
+agent = create_agent_chain()
+tickers = ""
 
 # Persistent state to store chat history
 if 'chat_history' not in st.session_state:
     st.session_state.chat_history = []
 
-# TODO: delete - For testing purposes
+# Prompt LLM Agent
 def my_chat_function(input):
-    return f"{input}? You got that right!"
+    return agent.run(input=input)
 
-# TODO: delete - For testing purposes
+# Set ticker symbol
 def set_stock(symbol):
-    print(symbol)
+    tickers = symbol
 
 # Ticker input
 st.header("Please enter the stock symbol")
@@ -23,8 +28,6 @@ if symbol:
 
 # Text input for user message
 user_input = st.chat_input("Your Message", key="user_input")
-
-
 
 # Button to send message
 if user_input:
