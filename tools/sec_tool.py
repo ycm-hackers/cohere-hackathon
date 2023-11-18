@@ -72,7 +72,7 @@ class SecToolAPI:
             client=self.co_client, user_agent="langchain", cohere_api_key=COHERE_API_KEY
         )
 
-    def retrieve(self, query: str, k: int = 3, max_str_len: int = 4080):
+    def retrieve(self, query: str, k: int = 3, max_str_len: int = 4040):
         """Fetch market news and return a summary."""
         retriever = WeaviateHybridSearchRetriever(
             client=self.client,
