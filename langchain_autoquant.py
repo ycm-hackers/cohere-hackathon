@@ -65,7 +65,7 @@ tools = [
 
 
 def create_agent_chain():
-    system_message = """
+    SYSTEM_MESSAGE = """
     You are a portfolio manager agent. Your job is the manage the stock portoflio based on latest financial news.
     Always understand buying power and current positions of the portfolio before performing trades actions on a stocks based 
     on your recommendations. 
@@ -108,7 +108,7 @@ def create_agent_chain():
                             memory=memory,
                             handle_parsing_errors=True,
                             agent_kwargs={
-                                'system_message': system_message, 
+                                'system_message': SYSTEM_MESSAGE, 
                                 'format_instructions': FORMAT_INSTRUCTIONS,
                                 'suffix': SUFFIX
                             })
