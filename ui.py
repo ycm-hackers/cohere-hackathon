@@ -8,9 +8,25 @@ st.title("Ask the SEC")
 agent = create_agent_chain()
 # tickers = ""
 
-# Create a placeholder
-placeholder = st.empty()
-
+# HTML for the loader
+loader_html = """
+<style>
+.loader {
+    border: 10px solid #f3f3f3; /* Light grey */
+    border-top: 10px solid #3498db; /* Blue */
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 2s linear infinite;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+</style>
+<div class='loader'></div>
+"""
+loader_placeholder = st.empty()
 
 # Persistent state to store chat history
 if 'chat_history' not in st.session_state:
@@ -18,9 +34,12 @@ if 'chat_history' not in st.session_state:
 
 # Prompt LLM Agent
 def my_chat_function(input):
-    # Display a loading message
-    placeholder.text('Loading data... Please wait.')
-    return agent.run(input=input)
+    # Display the loader
+    loader_placeholder.markdown(loader_html, unsafe_allow_html=True)
+    res = agent.run(input=input)
+    # Clear the loader
+    loader_placeholder.empty()
+    return res
 
 # Set ticker symbol
 # def set_stock(symbol):

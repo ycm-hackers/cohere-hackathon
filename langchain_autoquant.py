@@ -72,32 +72,33 @@ def create_agent_chain():
     If you're sending a JSON payload that includes a calculation, perform the calculation in advance and only send the result.
     """
 
-    FORMAT_INSTRUCTIONS = """To use a tool, please use the following format:
-    '''
-    Thought: Do I need to use a tool? Yes
-    Action: the action to take, should be one of [{tool_names}]
-    Action Input: the input to the action
-    Observation: the result of the action
-    '''
+#     FORMAT_INSTRUCTIONS = """To use a tool, please use the following format:
+#     '''
+#     Thought: Do I need to use a tool? Yes
+#     Action: the action to take, should be one of [{tool_names}]
+#     Action Input: the input to the action
+#     Observation: the result of the action
+#     '''
 
-    When you have gathered all the information on a trading decision, just write the last thought to the user in the form of a response.
+#     When you have gathered all the information on a trading decision, just write the last thought to the user in the form of a response.
 
-    '''
-    Thought: Do I need to use a tool? No
-    AI: [write last thought response]
-    '''
-    """
+#     '''
+#     Thought: Do I need to use a tool? No
+#     AI: [write last thought response]
+#     Exit AgentExecutor chain
+#     '''
+#     """
 
-    SUFFIX = '''
+#     SUFFIX = '''
 
-    Begin!
+#     Begin!
 
-    Previous conversation history:
-    {chat_history}
+#     Previous conversation history:
+#     {chat_history}
 
-    Instructions: {input}
-    {agent_scratchpad}
-    '''
+#     Instructions: {input}
+#     {agent_scratchpad}
+#     '''
 
     memory = ConversationBufferMemory(memory_key="chat_history")
     llm = Cohere(cohere_api_key=COHERE_API_KEY)
@@ -107,11 +108,13 @@ def create_agent_chain():
                             verbose=True,
                             memory=memory,
                             handle_parsing_errors=True,
+                            early_stopping_method="force",
                             agent_kwargs={
                                 'system_message': SYSTEM_MESSAGE, 
-                                'format_instructions': FORMAT_INSTRUCTIONS,
-                                'suffix': SUFFIX
-                            })
+                                # 'format_instructions': FORMAT_INSTRUCTIONS,
+                                # 'suffix': SUFFIX
+                            }
+                           )
 
 
 # In[ ]:

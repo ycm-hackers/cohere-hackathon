@@ -29,9 +29,14 @@ class AlpacaBuyOrderTool(BaseTool):
         """Use the tool."""
         search_wrapper = AlpacaToolApi()
         print(query)
-        ticker, quantity = query.split(',')
-       
-        return search_wrapper.create_buy_market_order(params={"ticker": ticker, "quantity": quantity})
+        
+
+        try:
+            ticker, quantity = query.split(',')
+
+            return search_wrapper.create_buy_market_order(params={"ticker": ticker, "quantity": quantity})
+        except Exception as error:
+            print('Caught this error: ' + repr(error))
 
     async def _arun(
         self,
