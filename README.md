@@ -1,15 +1,5 @@
 # cohere-lablab Hackathon
 
-### AutoQuant Install:
-
-```bash
-conda create --name autogen-env python=3.11
-
-pip install -r requirements.txt
-
-python autoquant.py
-```
-
 ### Data Handling
 
 Store financial data to VectorDB [weaviate](https://weaviate.io/):
