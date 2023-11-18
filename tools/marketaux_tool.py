@@ -24,6 +24,7 @@ class MarketauxTool(BaseTool):
     description = """
         Use to retrieve the latest market news on securities.
         Returns a JSON of article summaries with highlights and article URLs for requesting more information.
+        Only use this tool once.
         """
     args_schema: Type[MarketauxToolSchema] = MarketauxToolSchema
 
@@ -100,4 +101,6 @@ class MarketauxToolAPI:
 
             article["entities"] = entites
             feed_summary.append(article)
+
+            print(feed_summary)
         return feed_summary

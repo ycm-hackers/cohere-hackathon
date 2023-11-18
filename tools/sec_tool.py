@@ -22,9 +22,9 @@ class SecToolSchema(BaseModel):
 
 
 class SecTool(BaseTool):
-    name = "Marketaux"
+    name = "SEC Tool"
     description = """
-        Use to retrieve relevant SEC financial statements
+        Use to retrieve in depth factual financial statements released by the SEC
         """
     args_schema: Type[SecToolSchema] = SecToolSchema
 
@@ -72,7 +72,7 @@ class SecToolAPI:
             client=self.co_client, user_agent="langchain", cohere_api_key=COHERE_API_KEY
         )
 
-    def retrieve(self, query: str, k: int = 3):
+    def retrieve(self, query: str, k: int = 3, max_str_len: int = 4040):
         """Fetch market news and return a summary."""
         retriever = WeaviateHybridSearchRetriever(
             client=self.client,
@@ -88,7 +88,7 @@ class SecToolAPI:
         docs = ccr.get_relevant_documents(
             query,
         )
-        res = "\n".join([doc.page_content for doc in docs])
+        res = "\n".join([doc.page_content for doc in docs])[0:max_str_len]
         source = docs[0].metadata["source"]
 
         return f"""Contexts:{res}\nQuery:{query}.""", source

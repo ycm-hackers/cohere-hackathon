@@ -9,9 +9,9 @@ from tools.alpaca_tools.alpaca_api import AlpacaToolApi
 
 class AlpacaBuyOrderSchema(BaseModel):
     query: str = Field("""
-        Should be a 2 value string seperated by a comma with the following values:
+        Should be a string with 2 values seperated by a comma. The values should be of the following:
         1st value is `ticker` (A ticker symbol of the security to order. must be in all caps) 
-        and the 2nd value is `quantity` (an integer amount of the security to purchase)
+        and the 2nd value is the `quantity` (an integer amount of the security to purchase)
         """)
 
 class AlpacaBuyOrderTool(BaseTool):
@@ -28,9 +28,15 @@ class AlpacaBuyOrderTool(BaseTool):
     ) -> str:
         """Use the tool."""
         search_wrapper = AlpacaToolApi()
-        ticker, quantity = query.split(',')
+        print(query)
         
-        return search_wrapper.create_buy_market_order(params={"ticker": ticker, "quantity": quantity})
+
+        try:
+            ticker, quantity = query.split(',')
+
+            return search_wrapper.create_buy_market_order(params={"ticker": ticker, "quantity": quantity})
+        except Exception as error:
+            print('Caught this error: ' + repr(error))
 
     async def _arun(
         self,
